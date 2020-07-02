@@ -1,0 +1,9 @@
+version: '2'
+services:
+  server:
+    build: .
+    restart: always
+    ports:
+      - "3000:300"
+
+# docker-compose up
