@@ -36,6 +36,8 @@ canvas.height = window.innerHeight;
 ctx = setupCanvas(canvas);
 clearCanvas(canvas);
 
+drawPixel(4, 4, 'black')
+
 
 socket.on("clear", function (data) {
     clearCanvas();
@@ -53,3 +55,5 @@ socket.on("paint", function(data){
         socket.emit("canvas error", {name: data.name})
     }
 })
+
+console.log("runload ready")

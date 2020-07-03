@@ -3,7 +3,14 @@ services:
   server:
     build: .
     restart: always
-    ports:
-      - "3000:300"
+    network_mode: bridge
+    environment:
+      TWITCH_OAUTH: ''
+    expose:
+      - 3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=3000"
+      - "traefik.frontend.rule=Host:runload.ipepe.pl"
 
 # docker-compose up
