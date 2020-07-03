@@ -2,7 +2,7 @@ const express = require("express");
 const socket = require("socket.io");
 
 const app = express();
-const server = app.listen(3000, function () { console.log("express server started" ) });
+const server = app.listen(3000, function () { console.log("Express.js server started" ) });
 
 app.use(express.static("public"));
 const io = socket(server);
@@ -11,27 +11,45 @@ io.on("connection", function (socket) {
 });
 
 const tmi = require('tmi.js');
-const client = new tmi.client({
+const twitchChat = new tmi.client({
     identity: { username: 'runload', password: process.env.TWITCH_OAUTH },
     channels: [ 'runload']
 });
 
-client.on('message', function (target, context, msg, self) {
-    console.log('onMessageHandler', context);
+twitchChat.on('message', function (target, context, msg, self) {
     if (self) { return; } // Ignore messages from the bot
+    var name = context['display-name']
 
-    // Remove whitespace from chat message
-    const commandName = msg.trim();
-
-    // If the command is known, let's execute it
-    if (commandName === '!d20') {
-        const num = rollDice(commandName);
-        client.say(target, `You rolled a ${num}. Link: https://glitch.com/~twitch-chatbot`);
-        console.log(`* Executed ${commandName} command`);
-    } else {
-        console.log(`* Unknown command ${commandName}`);
+    if (msg.startsWith("!p")) {
+        var components = msg.split(" ")
+        try {
+            var data = {
+                x: parseInt(components[1], 10),
+                y: parseInt(components[2], 10),
+                style: components[3],
+                name: name
+            }
+            if (data.x > 0 && data.y > 0){
+                io.emit("paint", data)
+            }else{
+                twitchChat.say("#runload", "I can't do that @" + name);
+            }
+        }catch(error){
+            console.log("error emiting paint")
+            twitchChat.say("#runload", "I can't do that @" + name);
+        }
+    }else if ( msg.startsWith("!clear") && context.mod){
+        io.emit("clear")
+        twitchChat.say(target, "Clearing canvas @" + name);
+    }else if ( msg.startsWith("!setsize") && context.mod){
+        var components = msg.split(" ")
+        io.emit("setsize", {x: components[1], y: components[2]})
+        twitchChat.say(target, "Changing canvas size @" + name);
     }
 })
 
-client.connect();
+twitchChat.connect();
 
+io.on("canvas error", function(data){
+    twitchChat.say("#runload", "I can't do that @" + data.name);
+})
